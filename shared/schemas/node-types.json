@@ -1,0 +1,342 @@
+[
+  {
+    "type": "manual_input",
+    "title": "Veri girişi",
+    "category": "Tetikleyici",
+    "description": "JSON kayıtlarıyla başla.",
+    "icon": "Database",
+    "color": "#71895d",
+    "version": 1,
+    "configSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "records": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "maxItems": 10000,
+          "title": "Records",
+          "type": "array"
+        }
+      },
+      "title": "InputConfig",
+      "type": "object"
+    },
+    "defaults": {
+      "records": []
+    },
+    "inputs": [],
+    "outputs": [
+      "out"
+    ]
+  },
+  {
+    "type": "transform",
+    "title": "Veriyi düzenle",
+    "category": "Veri işleme",
+    "description": "Temizle, filtrele ve alanları dönüştür.",
+    "icon": "WandSparkles",
+    "color": "#648b78",
+    "version": 1,
+    "configSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "trim": {
+          "default": true,
+          "title": "Trim",
+          "type": "boolean"
+        },
+        "removeEmpty": {
+          "default": true,
+          "title": "Removeempty",
+          "type": "boolean"
+        },
+        "deduplicate": {
+          "default": true,
+          "title": "Deduplicate",
+          "type": "boolean"
+        },
+        "requiredField": {
+          "default": "",
+          "maxLength": 100,
+          "title": "Requiredfield",
+          "type": "string"
+        },
+        "filterField": {
+          "default": "",
+          "maxLength": 100,
+          "title": "Filterfield",
+          "type": "string"
+        },
+        "filterOp": {
+          "default": "none",
+          "enum": [
+            "none",
+            "eq",
+            "ne",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "contains"
+          ],
+          "title": "Filterop",
+          "type": "string"
+        },
+        "filterValue": {
+          "default": null,
+          "title": "Filtervalue"
+        },
+        "selectFields": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Selectfields",
+          "type": "array"
+        },
+        "rename": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "maxProperties": 50,
+          "title": "Rename",
+          "type": "object"
+        }
+      },
+      "title": "CleanConfig",
+      "type": "object"
+    },
+    "defaults": {
+      "trim": true,
+      "removeEmpty": true,
+      "deduplicate": true,
+      "requiredField": "",
+      "filterField": "",
+      "filterOp": "none",
+      "filterValue": null,
+      "selectFields": [],
+      "rename": {}
+    },
+    "inputs": [
+      "in"
+    ],
+    "outputs": [
+      "out"
+    ]
+  },
+  {
+    "type": "condition",
+    "title": "Koşul",
+    "category": "Kontrol",
+    "description": "Akışı bir koşula göre yönlendir.",
+    "icon": "GitBranch",
+    "color": "#b28d55",
+    "version": 1,
+    "configSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "default": "records.count",
+          "maxLength": 100,
+          "title": "Field",
+          "type": "string"
+        },
+        "op": {
+          "default": "gt",
+          "enum": [
+            "eq",
+            "ne",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "contains"
+          ],
+          "title": "Op",
+          "type": "string"
+        },
+        "value": {
+          "default": 0,
+          "title": "Value"
+        }
+      },
+      "title": "ConditionConfig",
+      "type": "object"
+    },
+    "defaults": {
+      "field": "records.count",
+      "op": "gt",
+      "value": 0
+    },
+    "inputs": [
+      "in"
+    ],
+    "outputs": [
+      "true",
+      "false"
+    ]
+  },
+  {
+    "type": "merge",
+    "title": "Birleştir",
+    "category": "Kontrol",
+    "description": "Paralel yolları tek çıktıda topla.",
+    "icon": "Combine",
+    "color": "#6a8897",
+    "version": 1,
+    "configSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "deduplicate": {
+          "default": false,
+          "title": "Deduplicate",
+          "type": "boolean"
+        }
+      },
+      "title": "MergeConfig",
+      "type": "object"
+    },
+    "defaults": {
+      "deduplicate": false
+    },
+    "inputs": [
+      "in"
+    ],
+    "outputs": [
+      "out"
+    ]
+  },
+  {
+    "type": "report",
+    "title": "Rapor oluştur",
+    "category": "Çıktı",
+    "description": "JSON, CSV ve HTML çıktıları üret.",
+    "icon": "FileBarChart",
+    "color": "#b88468",
+    "version": 1,
+    "configSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "default": "Akış raporu",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "formats": {
+          "items": {
+            "enum": [
+              "json",
+              "csv",
+              "html"
+            ],
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Formats",
+          "type": "array"
+        }
+      },
+      "title": "ReportConfig",
+      "type": "object"
+    },
+    "defaults": {
+      "title": "Akış raporu",
+      "formats": [
+        "json",
+        "csv",
+        "html"
+      ]
+    },
+    "inputs": [
+      "in"
+    ],
+    "outputs": []
+  },
+  {
+    "type": "delay",
+    "title": "Bekle",
+    "category": "Kontrol",
+    "description": "İptal edilebilir kalıcı zamanlayıcı.",
+    "icon": "Timer",
+    "color": "#8b8e6b",
+    "version": 1,
+    "configSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "seconds": {
+          "default": 3,
+          "maximum": 300,
+          "minimum": 0.1,
+          "title": "Seconds",
+          "type": "number"
+        }
+      },
+      "title": "DelayConfig",
+      "type": "object"
+    },
+    "defaults": {
+      "seconds": 3
+    },
+    "inputs": [
+      "in"
+    ],
+    "outputs": [
+      "out"
+    ]
+  },
+  {
+    "type": "aggregate",
+    "title": "Özetle",
+    "category": "Veri işleme",
+    "description": "Grupla, say ve toplamları hesapla.",
+    "icon": "ChartNoAxesCombined",
+    "color": "#71968e",
+    "version": 1,
+    "configSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "groupBy": {
+          "default": "category",
+          "maxLength": 100,
+          "minLength": 1,
+          "title": "Groupby",
+          "type": "string"
+        },
+        "valueField": {
+          "default": "amount",
+          "maxLength": 100,
+          "title": "Valuefield",
+          "type": "string"
+        },
+        "operation": {
+          "default": "sum",
+          "enum": [
+            "count",
+            "sum",
+            "mean"
+          ],
+          "title": "Operation",
+          "type": "string"
+        }
+      },
+      "title": "AggregateConfig",
+      "type": "object"
+    },
+    "defaults": {
+      "groupBy": "category",
+      "valueField": "amount",
+      "operation": "sum"
+    },
+    "inputs": [
+      "in"
+    ],
+    "outputs": [
+      "out"
+    ]
+  }
+]
