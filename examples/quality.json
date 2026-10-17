@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "name": "Müşteri verisi · kalite kontrol",
+  "nodes": [
+    {
+      "id": "source",
+      "type": "manual_input",
+      "typeVersion": 1,
+      "label": "Müşteri kayıtları",
+      "position": {
+        "x": 40,
+        "y": 80
+      },
+      "config": {
+        "records": [
+          {
+            "name": " Ada ",
+            "email": "ada@example.test",
+            "amount": 1200,
+            "category": "Tasarım"
+          },
+          {
+            "name": "Berk",
+            "email": "berk@example.test",
+            "amount": 450,
+            "category": "Geliştirme"
+          },
+          {
+            "name": " Ada ",
+            "email": "ada@example.test",
+            "amount": 1200,
+            "category": "Tasarım"
+          },
+          {
+            "name": "  ",
+            "email": "",
+            "amount": null,
+            "category": ""
+          },
+          {
+            "name": "Cem",
+            "email": "cem@example.test",
+            "amount": 2100,
+            "category": "Tasarım"
+          },
+          {
+            "name": "Deniz",
+            "email": "deniz@example.test",
+            "amount": 780,
+            "category": "Geliştirme"
+          },
+          {
+            "name": "Ece",
+            "email": "ece@example.test",
+            "amount": 3200,
+            "category": "Analiz"
+          }
+        ]
+      }
+    },
+    {
+      "id": "clean",
+      "type": "transform",
+      "typeVersion": 1,
+      "label": "Veriyi temizle",
+      "position": {
+        "x": 40,
+        "y": 340
+      },
+      "config": {
+        "trim": true,
+        "removeEmpty": true,
+        "deduplicate": true,
+        "requiredField": "email",
+        "filterField": "",
+        "filterOp": "none",
+        "filterValue": null,
+        "selectFields": [],
+        "rename": {}
+      }
+    },
+    {
+      "id": "report",
+      "type": "report",
+      "typeVersion": 1,
+      "label": "Kalite raporu",
+      "position": {
+        "x": 400,
+        "y": 210
+      },
+      "config": {
+        "title": "Müşteri veri kalite raporu",
+        "formats": [
+          "json",
+          "csv",
+          "html"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "source-out-clean",
+      "source": "source",
+      "target": "clean",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "clean-out-report",
+      "source": "clean",
+      "target": "report",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    }
+  ]
+}

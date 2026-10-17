@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "name": "Koşullu işlem · kol seçimi",
+  "nodes": [
+    {
+      "id": "source",
+      "type": "manual_input",
+      "typeVersion": 1,
+      "label": "Örnek kayıtlar",
+      "position": {
+        "x": 0,
+        "y": 200
+      },
+      "config": {
+        "records": [
+          {
+            "name": " Ada ",
+            "email": "ada@example.test",
+            "amount": 1200,
+            "category": "Tasarım"
+          },
+          {
+            "name": "Berk",
+            "email": "berk@example.test",
+            "amount": 450,
+            "category": "Geliştirme"
+          },
+          {
+            "name": " Ada ",
+            "email": "ada@example.test",
+            "amount": 1200,
+            "category": "Tasarım"
+          },
+          {
+            "name": "  ",
+            "email": "",
+            "amount": null,
+            "category": ""
+          },
+          {
+            "name": "Cem",
+            "email": "cem@example.test",
+            "amount": 2100,
+            "category": "Tasarım"
+          },
+          {
+            "name": "Deniz",
+            "email": "deniz@example.test",
+            "amount": 780,
+            "category": "Geliştirme"
+          },
+          {
+            "name": "Ece",
+            "email": "ece@example.test",
+            "amount": 3200,
+            "category": "Analiz"
+          }
+        ]
+      }
+    },
+    {
+      "id": "gate",
+      "type": "condition",
+      "typeVersion": 1,
+      "label": "En az 3 kayıt?",
+      "position": {
+        "x": 300,
+        "y": 200
+      },
+      "config": {
+        "field": "records.count",
+        "op": "gt",
+        "value": 3
+      }
+    },
+    {
+      "id": "yes",
+      "type": "transform",
+      "typeVersion": 1,
+      "label": "Uygun kayıtlar",
+      "position": {
+        "x": 600,
+        "y": 80
+      },
+      "config": {
+        "trim": true,
+        "removeEmpty": true,
+        "deduplicate": true,
+        "requiredField": "email",
+        "filterField": "",
+        "filterOp": "none",
+        "filterValue": null,
+        "selectFields": [],
+        "rename": {}
+      }
+    },
+    {
+      "id": "no",
+      "type": "transform",
+      "typeVersion": 1,
+      "label": "Alternatif yol",
+      "position": {
+        "x": 600,
+        "y": 340
+      },
+      "config": {
+        "trim": true,
+        "removeEmpty": true,
+        "deduplicate": true,
+        "requiredField": "",
+        "filterField": "",
+        "filterOp": "none",
+        "filterValue": null,
+        "selectFields": [],
+        "rename": {}
+      }
+    },
+    {
+      "id": "merge",
+      "type": "merge",
+      "typeVersion": 1,
+      "label": "Yolları birleştir",
+      "position": {
+        "x": 900,
+        "y": 200
+      },
+      "config": {
+        "deduplicate": false
+      }
+    },
+    {
+      "id": "report",
+      "type": "report",
+      "typeVersion": 1,
+      "label": "Sonuç raporu",
+      "position": {
+        "x": 1200,
+        "y": 200
+      },
+      "config": {
+        "title": "Akış raporu",
+        "formats": [
+          "json",
+          "csv",
+          "html"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "source-out-gate",
+      "source": "source",
+      "target": "gate",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "gate-true-yes",
+      "source": "gate",
+      "target": "yes",
+      "sourceHandle": "true",
+      "targetHandle": "in"
+    },
+    {
+      "id": "gate-false-no",
+      "source": "gate",
+      "target": "no",
+      "sourceHandle": "false",
+      "targetHandle": "in"
+    },
+    {
+      "id": "yes-out-merge",
+      "source": "yes",
+      "target": "merge",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "no-out-merge",
+      "source": "no",
+      "target": "merge",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "merge-out-report",
+      "source": "merge",
+      "target": "report",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    }
+  ]
+}

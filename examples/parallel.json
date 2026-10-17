@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "name": "Satışlar · paralel analiz",
+  "nodes": [
+    {
+      "id": "source",
+      "type": "manual_input",
+      "typeVersion": 1,
+      "label": "Satış kayıtları",
+      "position": {
+        "x": 0,
+        "y": 200
+      },
+      "config": {
+        "records": [
+          {
+            "name": " Ada ",
+            "email": "ada@example.test",
+            "amount": 1200,
+            "category": "Tasarım"
+          },
+          {
+            "name": "Berk",
+            "email": "berk@example.test",
+            "amount": 450,
+            "category": "Geliştirme"
+          },
+          {
+            "name": " Ada ",
+            "email": "ada@example.test",
+            "amount": 1200,
+            "category": "Tasarım"
+          },
+          {
+            "name": "  ",
+            "email": "",
+            "amount": null,
+            "category": ""
+          },
+          {
+            "name": "Cem",
+            "email": "cem@example.test",
+            "amount": 2100,
+            "category": "Tasarım"
+          },
+          {
+            "name": "Deniz",
+            "email": "deniz@example.test",
+            "amount": 780,
+            "category": "Geliştirme"
+          },
+          {
+            "name": "Ece",
+            "email": "ece@example.test",
+            "amount": 3200,
+            "category": "Analiz"
+          }
+        ]
+      }
+    },
+    {
+      "id": "high",
+      "type": "transform",
+      "typeVersion": 1,
+      "label": "Yüksek tutarlı",
+      "position": {
+        "x": 310,
+        "y": 50
+      },
+      "config": {
+        "trim": true,
+        "removeEmpty": true,
+        "deduplicate": true,
+        "requiredField": "email",
+        "filterField": "amount",
+        "filterOp": "gte",
+        "filterValue": 1000,
+        "selectFields": [],
+        "rename": {}
+      }
+    },
+    {
+      "id": "low",
+      "type": "transform",
+      "typeVersion": 1,
+      "label": "Düşük tutarlı",
+      "position": {
+        "x": 310,
+        "y": 350
+      },
+      "config": {
+        "trim": true,
+        "removeEmpty": true,
+        "deduplicate": true,
+        "requiredField": "email",
+        "filterField": "amount",
+        "filterOp": "lt",
+        "filterValue": 1000,
+        "selectFields": [],
+        "rename": {}
+      }
+    },
+    {
+      "id": "merge",
+      "type": "merge",
+      "typeVersion": 1,
+      "label": "Sonuçları birleştir",
+      "position": {
+        "x": 640,
+        "y": 200
+      },
+      "config": {
+        "deduplicate": false
+      }
+    },
+    {
+      "id": "report",
+      "type": "report",
+      "typeVersion": 1,
+      "label": "Satış raporu",
+      "position": {
+        "x": 960,
+        "y": 200
+      },
+      "config": {
+        "title": "Satış segmentleri",
+        "formats": [
+          "json",
+          "csv",
+          "html"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "source-out-high",
+      "source": "source",
+      "target": "high",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "source-out-low",
+      "source": "source",
+      "target": "low",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "high-out-merge",
+      "source": "high",
+      "target": "merge",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "low-out-merge",
+      "source": "low",
+      "target": "merge",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "merge-out-report",
+      "source": "merge",
+      "target": "report",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    }
+  ]
+}
