@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import {
   Database,
+  Globe,
   WandSparkles,
   GitBranch,
   Combine,
@@ -24,6 +25,7 @@ export const icons: Record<string, typeof Database> = {
   report: FileBarChart,
   delay: Timer,
   aggregate: ChartNoAxesCombined,
+  http_request: Globe,
 };
 export type BlockData = Record<string, unknown> & {
   definition: Definition;

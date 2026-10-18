@@ -99,7 +99,9 @@ const describe = (n: GraphNode) =>
             ? n.config.seconds + " saniye"
             : n.type === "aggregate"
               ? `${n.config.groupBy} · ${n.config.operation}`
-              : "Paralel yollar";
+              : n.type === "http_request"
+                ? `${n.config.method} · ${n.config.url}`
+                : "Paralel yollar";
 
 function Dialog({
   title,
@@ -1011,15 +1013,17 @@ function Studio() {
           <kbd>⌕</kbd>
         </label>
         <div className="category-tabs">
-          {["Tümü", "Veri işleme", "Kontrol", "Çıktı"].map((c) => (
-            <button
-              key={c}
-              className={category === c ? "selected" : ""}
-              onClick={() => setCategory(c)}
-            >
-              {c}
-            </button>
-          ))}
+          {["Tümü", "Veri işleme", "Kontrol", "Çıktı", "Entegrasyon"].map(
+            (c) => (
+              <button
+                key={c}
+                className={category === c ? "selected" : ""}
+                onClick={() => setCategory(c)}
+              >
+                {c}
+              </button>
+            ),
+          )}
         </div>
         <div className="palette-label">
           <span>YAPI TAŞLARI</span>
@@ -1655,6 +1659,88 @@ function Studio() {
                   />{" "}
                   Tekrarları kaldır
                 </label>
+              </>
+            ) : item.type === "http_request" ? (
+              <>
+                <label className="field">
+                  HTTP yöntemi
+                  <select
+                    value={String(item.config.method)}
+                    disabled={readOnly}
+                    onChange={(e) => patchItem({ method: e.target.value })}
+                  >
+                    <option value="GET">GET — Veri al</option>
+                    <option value="POST">POST — JSON gönder</option>
+                  </select>
+                </label>
+                <label className="field">
+                  API adresi
+                  <input
+                    type="url"
+                    value={String(item.config.url)}
+                    disabled={readOnly}
+                    placeholder="https://api.example.com/data"
+                    onChange={(e) => patchItem({ url: e.target.value })}
+                  />
+                </label>
+                <label className="field">
+                  Zaman aşımı (saniye)
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={Number(item.config.timeoutSeconds)}
+                    disabled={readOnly}
+                    onChange={(e) =>
+                      patchItem({ timeoutSeconds: e.target.valueAsNumber })
+                    }
+                  />
+                </label>
+                <label className="field">
+                  JSON yanıt yolu
+                  <input
+                    value={String(item.config.responsePath)}
+                    disabled={readOnly}
+                    placeholder="Boş: tüm yanıt · Örnek: data.items"
+                    onChange={(e) =>
+                      patchItem({ responsePath: e.target.value })
+                    }
+                  />
+                </label>
+                {item.config.method === "POST" && (
+                  <label className="field">
+                    JSON gövdesi
+                    <select
+                      value={String(item.config.bodySource)}
+                      disabled={readOnly}
+                      onChange={(e) =>
+                        patchItem({ bodySource: e.target.value })
+                      }
+                    >
+                      <option value="records">Önceki bloğun kayıtları</option>
+                      <option value="json">
+                        Gelişmiş ayarlardaki body nesnesi
+                      </option>
+                    </select>
+                  </label>
+                )}
+                <label className="field">
+                  Token ortam değişkeni adı (isteğe bağlı)
+                  <input
+                    value={String(item.config.tokenEnv)}
+                    disabled={readOnly}
+                    placeholder="Örnek: CRM"
+                    onChange={(e) => patchItem({ tokenEnv: e.target.value })}
+                  />
+                </label>
+                <p className="field-help">
+                  Token için sunucuda FLOWFORGE_HTTP_TOKEN_AD tanımla. Buraya
+                  anahtarın kendisini yazma. Yanıt bir JSON nesnesi veya nesne
+                  listesi olmalı. Başlıkları ve özel POST gövdesini gelişmiş
+                  JSON ayarlarından düzenleyebilirsin. Yalnızca genel ağ
+                  adresleri desteklenir; yönlendirmeler izlenmez. POST hataları
+                  otomatik yeniden denenmez.
+                </p>
               </>
             ) : item.type === "delay" ? (
               <label className="field">
