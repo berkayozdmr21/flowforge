@@ -135,6 +135,40 @@ def templates():
             edge("merge", "report"),
         ],
     }
+    http_template = dict(
+        id="http-users",
+        tag="HTTP ENTEGRASYONU",
+        description="Genel bir API'den kullanıcıları al, alanları seç ve rapor indir. İnternet bağlantısı gerekir.",
+        graph={
+            "schemaVersion": 1,
+            "name": "API kullanıcı raporu",
+            "nodes": [
+                node("source", "manual_input", "Manuel başlat", 0, 180, records=[]),
+                node("http", "http_request", "Kullanıcıları getir", 310, 180),
+                node(
+                    "select",
+                    "transform",
+                    "Rapor alanları",
+                    620,
+                    180,
+                    selectFields=["id", "name", "username", "email"],
+                ),
+                node(
+                    "report",
+                    "report",
+                    "API raporu",
+                    930,
+                    180,
+                    title="API kullanıcı raporu",
+                ),
+            ],
+            "edges": [
+                edge("source", "http"),
+                edge("http", "select"),
+                edge("select", "report"),
+            ],
+        },
+    )
     return [
         dict(
             id="quality",
@@ -154,4 +188,5 @@ def templates():
             description="İki bağımsız veri kolunu aynı çalıştırmada birleştir.",
             graph=parallel,
         ),
+        http_template,
     ]

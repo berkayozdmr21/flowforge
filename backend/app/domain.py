@@ -56,6 +56,29 @@ class AggregateConfig(Strict):
     operation: Literal["count", "sum", "mean"] = "sum"
 
 
+class HttpConfig(Strict):
+    method: Literal["GET", "POST"] = "GET"
+    url: str = Field(
+        default="https://jsonplaceholder.typicode.com/users", max_length=2048
+    )
+    timeoutSeconds: float = Field(default=15, ge=1, le=30)
+    responsePath: str = Field(default="", max_length=200)
+    bodySource: Literal["records", "json"] = "records"
+    body: dict[str, Any] = Field(default_factory=dict)
+    headers: dict[str, str] = Field(default_factory=dict, max_length=20)
+    tokenEnv: str = Field(default="", pattern=r"^(?:[A-Z][A-Z0-9_]{0,63})?$")
+
+    @model_validator(mode="after")
+    def valid_request(self):
+        from .http_node import validate_url, validate_headers
+
+        validate_url(self.url)
+        validate_headers(self.headers)
+        if self.responsePath and not all(self.responsePath.split(".")):
+            raise ValueError("Yanıt yolu noktayla ayrılmış alan adları olmalı.")
+        return self
+
+
 CONFIGS = {
     "manual_input": InputConfig,
     "transform": CleanConfig,
@@ -64,8 +87,17 @@ CONFIGS = {
     "report": ReportConfig,
     "delay": DelayConfig,
     "aggregate": AggregateConfig,
+    "http_request": HttpConfig,
 }
 INFO = [
+    (
+        "http_request",
+        "HTTP isteği",
+        "Entegrasyon",
+        "Bir API çağır, JSON yanıtını akışa aktar.",
+        "Globe",
+        "#708b9b",
+    ),
     (
         "manual_input",
         "Veri girişi",
