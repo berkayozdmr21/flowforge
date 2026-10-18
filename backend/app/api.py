@@ -1,5 +1,7 @@
 from __future__ import annotations
 import asyncio, time, os, json, hashlib, re
+from datetime import datetime
+from typing import Literal
 from contextlib import asynccontextmanager
 from urllib.parse import urlparse
 from fastapi import (
@@ -33,6 +35,8 @@ from .store import (
     Event,
     Artifact,
     Outbox,
+    Schedule,
+    ScheduleRun,
     uid,
     pack,
     unpack,
@@ -41,6 +45,7 @@ from .store import (
     event_dict,
 )
 from .activities import output_of
+from .scheduler import schedule_dict, PERIODS
 
 
 def migrate():
@@ -496,6 +501,143 @@ def download(key: str):
                 "Content-Security-Policy": "sandbox; default-src 'none'; style-src 'unsafe-inline'"
             },
         )
+
+
+class CreateSchedule(Strict):
+    revision: int = Field(ge=1)
+    name: str = Field(min_length=1, max_length=100)
+    mode: Literal["once", "hourly", "daily"] = "once"
+    startAt: datetime
+
+
+@app.post("/api/workflows/{key}/schedules", status_code=201)
+def create_schedule(key: str, body: CreateSchedule, request: Request):
+    request_key = request.headers.get("idempotency-key", "")
+    if not re.fullmatch(r"[A-Za-z0-9_-]{8,100}", request_key):
+        raise HTTPException(422, "Geçerli Idempotency-Key gerekli.")
+    if body.startAt.tzinfo is None or body.startAt.utcoffset() is None:
+        raise HTTPException(422, "Başlangıç zamanı saat dilimi içermeli.")
+    digest = hashlib.sha256(pack(body.model_dump(mode="json")).encode()).hexdigest()
+    with db() as s:
+        flow = flow_lock(s, key)
+        previous = s.execute(
+            select(Schedule).where(
+                Schedule.flow_id == key, Schedule.request_key == request_key
+            )
+        ).scalar_one_or_none()
+        if previous:
+            if previous.request_hash != digest:
+                raise HTTPException(
+                    409, "Bu anahtar farklı bir zamanlama için kullanıldı."
+                )
+            return schedule_dict(s, previous)
+        now = time.time()
+        start_at = body.startAt.timestamp()
+        if not now < start_at <= now + 5 * 366 * 86400:
+            raise HTTPException(
+                422, "Başlangıç gelecekte ve en fazla beş yıl sonra olmalı."
+            )
+        if flow.revision != body.revision:
+            raise HTTPException(409, "Zamanlamadan önce güncel akışı kaydet.")
+        if (
+            s.scalar(
+                select(func.count())
+                .select_from(Schedule)
+                .where(Schedule.status.in_(["active", "paused"]))
+            )
+            >= 100
+        ):
+            raise HTTPException(409, "En fazla 100 açık zamanlama olabilir.")
+        graph = Graph(**unpack(flow.graph))
+        check(graph)
+        version = make_version(s, flow, graph)
+        item = Schedule(
+            id=uid(),
+            flow_id=key,
+            version_id=version.id,
+            name=body.name,
+            mode=body.mode,
+            next_run=start_at,
+            interval_seconds=PERIODS[body.mode],
+            request_key=request_key,
+            request_hash=digest,
+        )
+        s.add(item)
+        s.flush()
+        return schedule_dict(s, item)
+
+
+@app.get("/api/workflows/{key}/schedules")
+def list_schedules(key: str):
+    with db() as s:
+        flow_lock(s, key)
+        return [
+            schedule_dict(s, item)
+            for item in s.execute(
+                select(Schedule)
+                .where(Schedule.flow_id == key)
+                .order_by(Schedule.created.desc())
+                .limit(200)
+            ).scalars()
+        ]
+
+
+def schedule_lock(s, key):
+    item = s.execute(
+        select(Schedule).where(Schedule.id == key).with_for_update()
+    ).scalar_one_or_none()
+    if item is None:
+        raise HTTPException(404, "Zamanlama bulunamadı.")
+    return item
+
+
+@app.post("/api/schedules/{key}/{action}")
+def change_schedule(key: str, action: Literal["pause", "resume", "cancel"]):
+    with db() as s:
+        item = schedule_lock(s, key)
+        if item.status in {"completed", "cancelled"}:
+            if item.status == "cancelled" and action == "cancel":
+                return schedule_dict(s, item)
+            raise HTTPException(
+                409, "Tamamlanan veya iptal edilen zamanlama değiştirilemez."
+            )
+        if action == "cancel":
+            item.status = "cancelled"
+        elif action == "pause":
+            item.status = "paused"
+        elif item.status == "paused":
+            now = time.time()
+            if item.interval_seconds and item.next_run <= now:
+                missed = int((now - item.next_run) // item.interval_seconds) + 1
+                item.next_run += missed * item.interval_seconds
+                item.skipped += missed
+            item.status = "active"
+        s.flush()
+        return schedule_dict(s, item)
+
+
+@app.get("/api/schedules/{key}/runs")
+def schedule_history(key: str):
+    with db() as s:
+        schedule_lock(s, key)
+        rows = s.execute(
+            select(ScheduleRun, Run)
+            .join(Run, ScheduleRun.run_id == Run.id)
+            .where(ScheduleRun.schedule_id == key)
+            .order_by(ScheduleRun.due.desc())
+            .limit(50)
+        ).all()
+        return [
+            dict(
+                id=run.id,
+                scheduledFor=occurrence.due,
+                created=run.created,
+                status=run.status,
+                finished=run.finished,
+                error=run.error,
+            )
+            for occurrence, run in rows
+        ]
 
 
 DIST = ROOT / "frontend/dist"

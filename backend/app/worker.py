@@ -9,6 +9,7 @@ from temporalio.exceptions import WorkflowAlreadyStartedError
 from .store import db, Outbox, Run, emit, TERMINAL
 from .workflow import GraphWorkflow
 from .activities import load_spec, execute_node, node_state, finish_run
+from .scheduler import tick
 
 TASK_QUEUE = "flowforge-v1"
 
@@ -20,6 +21,7 @@ async def connect():
 async def dispatch(client):
     while True:
         try:
+            await asyncio.to_thread(tick)
             with db() as s:
                 pending = [
                     r.run_id
