@@ -142,6 +142,32 @@ class Outbox(Base):
     error = Column(Text)
 
 
+class Schedule(Base):
+    __tablename__ = "workflow_schedules"
+    __table_args__ = (UniqueConstraint("flow_id", "request_key"),)
+    id = Column(String, primary_key=True, default=uid)
+    flow_id = Column(String, ForeignKey("workflows.id"), nullable=False)
+    version_id = Column(String, ForeignKey("workflow_versions.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    mode = Column(String, nullable=False)
+    status = Column(String, default="active", nullable=False)
+    next_run = Column(Float, nullable=False, index=True)
+    interval_seconds = Column(Integer, nullable=False, default=0)
+    created = Column(Float, default=time.time, nullable=False)
+    fired = Column(Integer, default=0, nullable=False)
+    skipped = Column(Integer, default=0, nullable=False)
+    last_run_id = Column(String, ForeignKey("runs.id"))
+    request_key = Column(String, nullable=False)
+    request_hash = Column(String, nullable=False)
+
+
+class ScheduleRun(Base):
+    __tablename__ = "schedule_runs"
+    schedule_id = Column(String, ForeignKey("workflow_schedules.id"), primary_key=True)
+    due = Column(Float, primary_key=True)
+    run_id = Column(String, ForeignKey("runs.id"), nullable=False, unique=True)
+
+
 @contextmanager
 def db():
     s = Session()
