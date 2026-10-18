@@ -4,7 +4,7 @@
 - Güncel amaç: Planın çalışan yerel ürün kapsamını tamamlamak; kullanıcı mor/neon görünümü istemediği için sıcak nötr ve zeytin paleti kullanılır.
 - Kaynaklar: React/TypeScript, FastAPI, PostgreSQL, gerçek Temporal worker.
 - Gerçek bloklar: veri girişi, dönüştürme, koşul, birleştirme, rapor, kalıcı bekleme, özetleme, HTTP GET/POST.
-- İlk planın gelişmiş bağlantı/ekip/schedule kısmı gelecek kapsamdır. Yapılmayan özellikler README'de açıkça belirtilir.
+- Tek seferlik, saatlik ve 24 saatlik zamanlamalar; duraklat/devam/iptal ve geçmiş eklendi. AI/dosya/webhook/ekip özellikleri gelecek kapsamdır.
 - Güncel çalıştırma: BASLAT.cmd; ayrıntılar README.md içinde.
-- GitHub: https://github.com/berkayozdmr21/flowforge. HTTP özelliği feat/http-request-block dalında hazırlanır. Katkıcı/co-author olarak asistan eklenmez.
+- GitHub: https://github.com/berkayozdmr21/flowforge. HTTP özelliği PR #1 ile birleştirildi; zamanlamalar feat/workflow-schedules dalında geliştirilir. Katkıcı/co-author olarak asistan eklenmez.
 - Kişisel kayıtlar, sanal ortamlar, çalışma veritabanları ve indirilen ikili araçlar ZIP/GitHub paketine dahil edilmez.

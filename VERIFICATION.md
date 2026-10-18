@@ -1,5 +1,15 @@
 # Verification — 18 October 2026
 
+## Scheduled execution extension
+
+- 140 backend tests and 24 frontend tests passed (164 total); TypeScript/Vite production build passed.
+- Backend tests cover future/aware dates, UTC normalization, revision validation, immutable version capture, idempotent creation/retry, pause/resume/cancel, one-shot completion, interval advancement, missed-slot coalescing, overlap skipping, capacity deferral and transactional rollback.
+- Frontend tests cover local-time round trips, invalid/past dates, saving the current draft before creation, idempotency headers, read-only history and failed draft preparation.
+- Real PostgreSQL + Temporal acceptance triggered a one-shot at its due time and downloaded all three reports. Paused/cancelled schedules did not fire; resuming a paused hourly schedule skipped its expired slot.
+- Four competing scheduler ticks using a controlled due time against real PostgreSQL produced exactly one occurrence and one successful run.
+- A one-shot persisted across a full native stack shutdown/restart and completed once with three verified reports.
+- Schedules require the local services to stay available; they are not cloud timers. Hourly/daily recurrences are fixed intervals. Pausing/cancelling a schedule does not roll back or stop an already dispatched run.
+
 ## HTTP request extension
 
 - 122 backend/domain tests and 17 frontend graph/history tests passed (139 total); production TypeScript/Vite build passed.
@@ -35,6 +45,6 @@ The browser confirmed template selection, adding a delay block and undoing it, r
 
 ## Scope
 
-The core local-workspace delivery now has eight real node types, including GET/POST HTTP requests. File/AI connections, webhooks/schedules and multi-user permissions remain future extensions.
+The core local-workspace delivery now has eight real node types, GET/POST HTTP requests and persistent scheduled triggers. File/AI connections, webhooks and multi-user permissions remain future extensions.
 
 The final browser acceptance also imported a delay workflow from JSON, refreshed while it was running, reattached to the same run ID in read-only mode and cancelled it from the UI. The mini map displayed all three nodes and all three report links were visible.

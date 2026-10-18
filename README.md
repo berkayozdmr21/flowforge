@@ -23,8 +23,9 @@ Design workflows on a canvas, execute them with a real durable worker, inspect e
 - Run history, node output previews, attempt history and JSON workflow import/export.
 - Server-generated **JSON, CSV and HTML** reports with safe escaping.
 - Reduced motion, keyboard shortcuts and collapsible work panels.
+- Persistent one-shot, hourly and daily schedules with pause/resume, cancellation, next-run display and occurrence history.
 
-The original seven blocks and the public HTTP demo work without API keys. The HTTP demo needs internet access. AI provider integrations, file ingestion, webhook/scheduled triggers and multi-user/team authorization remain future extensions. HTTP requests are real server-side calls, not simulated responses.
+The original seven blocks and the public HTTP demo work without API keys. The HTTP demo needs internet access. AI provider integrations, file ingestion, webhooks and multi-user/team authorization remain future extensions. HTTP requests and scheduled executions are real, not simulated responses.
 
 ## Try it
 
@@ -96,7 +97,7 @@ Activity execution is at least once. Stable output names, artifact IDs and compl
 
 ### Persistence
 
-Application tables: `workflows`, `workflow_versions`, `runs`, `node_runs`, `node_attempts`, `run_events`, `artifacts`, `outbox`. Alembic manages the schema. Drafts use revisions; stale updates return 409. A running job uses its saved version even if the editor draft changes.
+Application tables: `workflows`, `workflow_versions`, `runs`, `node_runs`, `node_attempts`, `run_events`, `artifacts`, `outbox`, `workflow_schedules`, `schedule_runs`. Alembic manages the schema. Drafts use revisions; stale updates return 409. A running job or schedule uses its saved version even if the editor draft changes.
 
 Clearing browser storage removes local unsaved drafts, not PostgreSQL saves. Named records, run history and reports remain under project-managed persistent storage. Keep backups of `.runtime` for the native stack or Docker volumes for Compose.
 
@@ -136,6 +137,26 @@ python scripts/http_smoke.py
 
 The demo POST endpoint simulates creation; its data does not persist at the provider. The acceptance script sends only fixed demo data.
 
+## Scheduled executions
+
+Open the **Zamanlanmış görevler** calendar-clock button in the editor header. Choose a name, first local date/time and **Bir kez**, **Her saat** or **Her 24 saat**. Saving first persists the current draft and creates an immutable version; subsequent draft edits do not change that schedule. Unapplied block JSON must be applied before scheduling.
+
+- Times are sent as timezone-aware UTC instants and displayed in the browser's local timezone. Hourly/daily modes use fixed 3,600/86,400-second intervals, not calendar-day or DST-aware cron rules.
+- PostgreSQL stores schedules and their occurrence history. The worker polls due schedules about once per second and transactionally creates the run, node states, schedule occurrence and existing Temporal outbox record. The browser may be closed; the computer, PostgreSQL, Temporal and worker must remain available. This is not a hosted always-on scheduler.
+- PostgreSQL advisory and row locks serialize competing scheduler ticks. Unique occurrence/run keys and atomic advancement prevent duplicate database occurrences after dispatcher restarts. External HTTP side effects retain the idempotency limitations documented above.
+- After downtime, a one-shot remains due and executes when the worker returns. Repeating schedules coalesce missed slots into the latest due slot; older slots are counted as skipped. If that schedule's previous run is still open or the worker observes 10 open runs, the repeating slot is skipped. One-shots wait for capacity.
+- **Duraklat** prevents future dispatch. **Devam et** skips past repeating slots and resumes at the next future slot; an overdue paused one-shot remains due. **Zamanlamayı iptal et** permanently disables future dispatch. These actions do not cancel an already queued/running workflow: cancel that run separately in the execution panel.
+- A one-shot is marked **Tetiklendi** when its run is queued; this is separate from its run's completion status. Each schedule shows its pinned version, next/held time, trigger count, skipped count, latest run status and up to 50 recent occurrences. Open an occurrence to inspect the immutable run and reports.
+- At most 100 active/paused schedules are allowed in the local workspace. Schedule creation requires the same source checks and an idempotency key as manual execution.
+
+With the stack running, verify real timed execution, controls, reports and competing PostgreSQL ticks:
+
+```sh
+python scripts/schedule_smoke.py
+```
+
+For restart acceptance, run `python scripts/schedule_smoke.py --prepare-restart`, stop/restart the local stack, then run `python scripts/schedule_smoke.py --verify-restart`. The script creates demo schedules and stores its restart reference only under ignored `.runtime/`.
+
 ## Controls
 
 | Action | Control |
@@ -166,6 +187,9 @@ Open `/docs` for the interactive API. Key endpoints:
 | GET / POST | `/api/workflows/{id}/versions` | Immutable versions |
 | POST | `/api/workflows/validate` | Validate a graph |
 | POST | `/api/workflows/{id}/runs` | Start a saved version |
+| GET / POST | `/api/workflows/{id}/schedules` | List / create version-pinned schedules |
+| POST | `/api/schedules/{id}/{pause,resume,cancel}` | Control future dispatch |
+| GET | `/api/schedules/{id}/runs` | Recent scheduled occurrences and run states |
 | GET | `/api/runs`, `/api/runs/{id}` | History / snapshot |
 | POST | `/api/runs/{id}/cancel` | Request cancellation |
 | GET | `/api/runs/{id}/events`, `/attempts` | Event replay / attempts |
@@ -189,7 +213,7 @@ npm run build
 
 Run the native launcher with `python run.py` or use Compose. For hot reload, run `npm run dev` in `frontend`; its `/api` proxy expects an API on 9030. Set `DATABASE_URL`, `TEMPORAL_ADDRESS` and optionally `FLOWFORGE_DATA` for separate API/worker processes.
 
-Automated checks cover backend/domain behavior, HTTP configuration and transport boundaries, activity output persistence, and frontend graph/history behavior. Real-stack checks exercise the four templates, real GET/POST calls and artifact downloads; the original core checks also exercised worker restart and cancellation. See [VERIFICATION.md](VERIFICATION.md) for the recorded results.
+Automated checks cover backend/domain behavior, HTTP transport, schedule timing and lifecycle, activity persistence, and frontend graph/history/schedule behavior. Real-stack checks exercise four templates, real GET/POST calls, scheduled triggers, competing PostgreSQL ticks, full stack restart and artifact downloads. See [VERIFICATION.md](VERIFICATION.md) for recorded results.
 
 `scripts/smoke.py`, `scripts/resilience.py` and `scripts/error_smoke.py` exercise a running local stack on 9030. They create clearly named test workflows and runs, so use a development data directory.
 
@@ -221,7 +245,7 @@ run.py                     Native stack supervisor
 - Output previews are bounded; report downloads contain full results. HTML is escaped and CSV formula-like strings are neutralized.
 - Cancellation is cooperative. Already committed output files or completed operations are not magically rolled back. Only completed report records are offered for download.
 - Mobile layouts are available, but dense graph editing is primarily a desktop experience. Direct touch dragging has not been exhaustively device-tested.
-- No automatic external messages, provider calls, recurring schedules or GitHub publication are enabled by this project.
+- Schedules dispatch only after explicit creation. HTTP calls occur only in a graph's configured HTTP block. The application does not publish to GitHub or send external messages on its own.
 
 ## References
 
