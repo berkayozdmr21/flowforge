@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "name": "API kullanıcı raporu",
+  "nodes": [
+    {
+      "id": "source",
+      "type": "manual_input",
+      "typeVersion": 1,
+      "label": "Manuel başlat",
+      "position": {
+        "x": 0,
+        "y": 180
+      },
+      "config": {
+        "records": []
+      }
+    },
+    {
+      "id": "http",
+      "type": "http_request",
+      "typeVersion": 1,
+      "label": "Kullanıcıları getir",
+      "position": {
+        "x": 310,
+        "y": 180
+      },
+      "config": {
+        "method": "GET",
+        "url": "https://jsonplaceholder.typicode.com/users",
+        "timeoutSeconds": 15,
+        "responsePath": "",
+        "bodySource": "records",
+        "body": {},
+        "headers": {},
+        "tokenEnv": ""
+      }
+    },
+    {
+      "id": "select",
+      "type": "transform",
+      "typeVersion": 1,
+      "label": "Rapor alanları",
+      "position": {
+        "x": 620,
+        "y": 180
+      },
+      "config": {
+        "trim": true,
+        "removeEmpty": true,
+        "deduplicate": true,
+        "requiredField": "",
+        "filterField": "",
+        "filterOp": "none",
+        "filterValue": null,
+        "selectFields": [
+          "id",
+          "name",
+          "username",
+          "email"
+        ],
+        "rename": {}
+      }
+    },
+    {
+      "id": "report",
+      "type": "report",
+      "typeVersion": 1,
+      "label": "API raporu",
+      "position": {
+        "x": 930,
+        "y": 180
+      },
+      "config": {
+        "title": "API kullanıcı raporu",
+        "formats": [
+          "json",
+          "csv",
+          "html"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "source-out-http",
+      "source": "source",
+      "target": "http",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "http-out-select",
+      "source": "http",
+      "target": "select",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    },
+    {
+      "id": "select-out-report",
+      "source": "select",
+      "target": "report",
+      "sourceHandle": "out",
+      "targetHandle": "in"
+    }
+  ]
+}

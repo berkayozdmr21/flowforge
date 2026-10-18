@@ -17,6 +17,7 @@ from .store import (
     TERMINAL,
 )
 from .operations import process, report_bytes, atomic_write
+from .http_node import request_json
 
 
 def lock_run(s, run_id):
@@ -131,7 +132,12 @@ def execute_node(args: dict):
                 ).scalars()
             }
             inputs = [output_of(parents[key]) for key in args["parents"]]
-        envelope, port = process(node["type"], node["config"], inputs)
+        if node["type"] == "http_request":
+            envelope, port = request_json(
+                node["config"], inputs, run_id + ":" + node_id
+            )
+        else:
+            envelope, port = process(node["type"], node["config"], inputs)
         raw = pack(envelope).encode("utf-8")
         if len(raw) > 10 * 1024 * 1024:
             raise ValueError("Blok çıktısı 10 MB sınırını aşıyor.")

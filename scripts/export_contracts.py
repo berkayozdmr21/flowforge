@@ -17,4 +17,4 @@ for t in templates():
     (ROOT / "examples" / (t["id"] + ".json")).write_text(
         json.dumps(t["graph"], ensure_ascii=False, indent=2), encoding="utf-8"
     )
-print("Shared contracts and three runnable example documents exported.")
+print(f"Shared contracts and {len(templates())} runnable example documents exported.")

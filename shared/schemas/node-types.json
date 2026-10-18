@@ -1,5 +1,93 @@
 [
   {
+    "type": "http_request",
+    "title": "HTTP isteği",
+    "category": "Entegrasyon",
+    "description": "Bir API çağır, JSON yanıtını akışa aktar.",
+    "icon": "Globe",
+    "color": "#708b9b",
+    "version": 1,
+    "configSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "default": "GET",
+          "enum": [
+            "GET",
+            "POST"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "url": {
+          "default": "https://jsonplaceholder.typicode.com/users",
+          "maxLength": 2048,
+          "title": "Url",
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "default": 15,
+          "maximum": 30,
+          "minimum": 1,
+          "title": "Timeoutseconds",
+          "type": "number"
+        },
+        "responsePath": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Responsepath",
+          "type": "string"
+        },
+        "bodySource": {
+          "default": "records",
+          "enum": [
+            "records",
+            "json"
+          ],
+          "title": "Bodysource",
+          "type": "string"
+        },
+        "body": {
+          "additionalProperties": true,
+          "title": "Body",
+          "type": "object"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "maxProperties": 20,
+          "title": "Headers",
+          "type": "object"
+        },
+        "tokenEnv": {
+          "default": "",
+          "pattern": "^(?:[A-Z][A-Z0-9_]{0,63})?$",
+          "title": "Tokenenv",
+          "type": "string"
+        }
+      },
+      "title": "HttpConfig",
+      "type": "object"
+    },
+    "defaults": {
+      "method": "GET",
+      "url": "https://jsonplaceholder.typicode.com/users",
+      "timeoutSeconds": 15,
+      "responsePath": "",
+      "bodySource": "records",
+      "body": {},
+      "headers": {},
+      "tokenEnv": ""
+    },
+    "inputs": [
+      "in"
+    ],
+    "outputs": [
+      "out"
+    ]
+  },
+  {
     "type": "manual_input",
     "title": "Veri girişi",
     "category": "Tetikleyici",

@@ -12,8 +12,8 @@ def test_template_valid(t):
 
 def test_unique_registry():
     r = registry()
-    assert len(r) == 7
-    assert len({d["type"] for d in r}) == 7
+    assert len(r) == 8
+    assert len({d["type"] for d in r}) == 8
 
 
 @pytest.mark.parametrize(

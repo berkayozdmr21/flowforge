@@ -44,4 +44,4 @@ for t in templates:
     events = client.get("/api/runs/" + r["id"] + "/events").json()
     assert [e["sequence"] for e in events] == list(range(1, len(events) + 1))
     print("  Reports verified; events:", len(events), flush=True)
-print("All three real PostgreSQL + Temporal flows passed.", flush=True)
+print(f"All {len(templates)} real PostgreSQL + Temporal flows passed.", flush=True)
