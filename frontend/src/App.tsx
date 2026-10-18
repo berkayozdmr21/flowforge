@@ -59,8 +59,10 @@ import {
   Command,
   Activity,
   GitBranch,
+  CalendarClock,
 } from "lucide-react";
 import BlockNode, { icons, type StudioNode } from "./BlockNode";
+import Schedules from "./Schedules";
 import { useStudio } from "./store";
 import { api, post, clone, labels, stamp } from "./api";
 import { validConnection, parseGraph } from "./graph";
@@ -964,6 +966,13 @@ function Studio() {
           </span>
         </div>
         <div className="top-actions">
+          <button
+            className="icon-button"
+            aria-label="Zamanlanmış görevler"
+            onClick={() => setDialog("schedules")}
+          >
+            <CalendarClock size={17} />
+          </button>
           <button
             className="icon-button"
             aria-label="Sürüm geçmişi"
@@ -1989,6 +1998,37 @@ function Studio() {
           >
             <Copy size={14} /> Açık akışı yeni bir kopya olarak kaydet
           </button>
+        </Dialog>
+      )}
+      {dialog === "schedules" && current && (
+        <Dialog
+          title="Zamanı gelince, akış başlasın."
+          onClose={() => setDialog(null)}
+          wide
+        >
+          <Schedules
+            flow={current}
+            canCreate={!readOnly && !active}
+            openRun={openRun}
+            prepare={async () => {
+              if (rawError) throw Error("Önce blok JSON hatasını düzelt.");
+              if (
+                item &&
+                raw !==
+                  JSON.stringify(
+                    item.type === "manual_input"
+                      ? item.config.records
+                      : item.config,
+                    null,
+                    2,
+                  )
+              )
+                throw Error(
+                  "JSON değişikliğini önce blok panelindeki uygula düğmesiyle onayla.",
+                );
+              return saveCurrent();
+            }}
+          />
         </Dialog>
       )}
       {dialog === "history" && (
