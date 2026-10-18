@@ -27,7 +27,7 @@ def test_untrusted_host_rejected(client):
 
 
 def test_registry(client):
-    assert len(client.get("/api/node-types").json()) == 7
+    assert len(client.get("/api/node-types").json()) == 8
 
 
 def test_all_templates_validate(client):
