@@ -10,11 +10,11 @@ Design workflows on a canvas, execute them with a real durable worker, inspect e
 
 ## What works
 
-- Seven executable node types: **JSON input, transform, condition, merge, report, durable delay and aggregation**.
+- Eight executable node types: **JSON input, transform, condition, merge, report, durable delay, aggregation and HTTP request**.
 - A visual graph editor with typed ports, connection validation, mini map, zoom, node settings, duplication and deletion.
 - A connection dialog as an alternative to dragging ports.
 - Undo/redo, one history entry per completed drag, and browser draft persistence.
-- Three executable templates: data quality, conditional routing and parallel sales analysis.
+- Four executable templates: data quality, conditional routing, parallel sales analysis and a live HTTP API report.
 - Server-side cycle detection, reachability checks, port validation and configuration schemas.
 - Real Temporal workflows and Activities, up to four concurrent ready nodes per run, bounded retries and cancellation.
 - Immutable workflow versions, optimistic draft updates and idempotent run creation.
@@ -24,7 +24,7 @@ Design workflows on a canvas, execute them with a real durable worker, inspect e
 - Server-generated **JSON, CSV and HTML** reports with safe escaping.
 - Reduced motion, keyboard shortcuts and collapsible work panels.
 
-All seven blocks work without API keys. There are no simulated AI responses. Provider connections, HTTP/file ingestion, webhook/scheduled triggers and multi-user/team authorization remain future extensions; this delivery completes the core local-workspace scope in [PROJE_PLANI.md](PROJE_PLANI.md), plus delay and aggregation.
+The original seven blocks and the public HTTP demo work without API keys. The HTTP demo needs internet access. AI provider integrations, file ingestion, webhook/scheduled triggers and multi-user/team authorization remain future extensions. HTTP requests are real server-side calls, not simulated responses.
 
 ## Try it
 
@@ -111,8 +111,30 @@ Clearing browser storage removes local unsaved drafts, not PostgreSQL saves. Nam
 | Report | Title and JSON/CSV/HTML formats |
 | Delay | Persistent timer, 0.1–300 seconds, cancellable |
 | Aggregate | Group field, numeric field, count/sum/mean |
+| HTTP request | GET/POST URL, timeout, nested JSON response path, input/custom JSON body, headers and optional bearer-token environment reference |
 
 Transforms use a fixed declarative operation set. There is no `eval`, arbitrary Python block or user-supplied executable code.
+
+### HTTP request block
+
+Choose **HTTP ENTEGRASYONU / API kullanıcı raporu** in the template picker. It runs `JSON input → HTTP GET → Transform → Report` against JSONPlaceholder's public demo `/users` endpoint and exports selected fields as JSON, CSV and HTML. Empty input records are valid for a GET request.
+
+- **GET** replaces incoming records with the API's JSON response. A JSON object becomes one record; an array must contain objects. For a wrapper such as `{"data":{"items":[...]}}`, set `responsePath` to `data.items`.
+- **POST** sends the previous block's records as a JSON array, or the `body` object from advanced JSON settings when `bodySource` is `json`. Each node execution adds a stable `Idempotency-Key` derived from run/node IDs.
+- The inspector exposes method, URL, timeout (1–30 seconds), response path, body source and token reference. Non-secret headers and a custom body can be edited under **Gelişmiş JSON ayarları** and applied explicitly.
+- Requests and responses are limited to 1 MB; responses may contain at most 10,000 records. Responses must have a JSON content type. Redirects, local/private/reserved addresses, embedded URL credentials, custom ports and proxy environment settings are not supported. DNS results are checked and connections use the selected validated IP while HTTPS verifies the original hostname.
+- GET transport errors, HTTP 408/429 and 5xx errors use the existing bounded Activity retry policy. Other HTTP status errors, invalid JSON and invalid configuration are permanent failures. POST request errors are permanent to avoid automatic resubmission after an ambiguous result.
+- A completed node reuses its stored output. A worker crash or Activity timeout before persistence can still repeat an external request: the target API must honor `Idempotency-Key` for duplicate protection. Cancellation cannot roll back a remote operation. There is no exactly-once guarantee for third-party APIs.
+
+For bearer authentication, set `tokenEnv` to a reference such as `CRM`, then define `FLOWFORGE_HTTP_TOKEN_CRM` in the **worker's environment** before starting the stack. Native `run.py` inherits shell variables; with Docker, explicitly pass the same variable to the `worker` service. Tokens are read at execution time and sent only over HTTPS. Token values are not stored in graph versions or HTTP metadata. Do not put credentials in URLs, `headers` or custom bodies: those settings are saved and exported with the graph. The generated reports contain API response data, so choose APIs and output fields accordingly.
+
+To exercise real GET and POST calls against the public demo service while the stack is running:
+
+```sh
+python scripts/http_smoke.py
+```
+
+The demo POST endpoint simulates creation; its data does not persist at the provider. The acceptance script sends only fixed demo data.
 
 ## Controls
 
@@ -167,7 +189,7 @@ npm run build
 
 Run the native launcher with `python run.py` or use Compose. For hot reload, run `npm run dev` in `frontend`; its `/api` proxy expects an API on 9030. Set `DATABASE_URL`, `TEMPORAL_ADDRESS` and optionally `FLOWFORGE_DATA` for separate API/worker processes.
 
-**82 automated checks passed:** 65 backend/domain tests and 17 frontend graph/history tests. Additional real-stack checks exercised all three templates, artifact downloads, a worker restart, cancellation and a permanent failure. See [VERIFICATION.md](VERIFICATION.md).
+Automated checks cover backend/domain behavior, HTTP configuration and transport boundaries, activity output persistence, and frontend graph/history behavior. Real-stack checks exercise the four templates, real GET/POST calls and artifact downloads; the original core checks also exercised worker restart and cancellation. See [VERIFICATION.md](VERIFICATION.md) for the recorded results.
 
 `scripts/smoke.py`, `scripts/resilience.py` and `scripts/error_smoke.py` exercise a running local stack on 9030. They create clearly named test workflows and runs, so use a development data directory.
 

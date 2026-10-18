@@ -1,4 +1,16 @@
-# Verification — 17 October 2026
+# Verification — 18 October 2026
+
+## HTTP request extension
+
+- 122 backend/domain tests and 17 frontend graph/history tests passed (139 total); production TypeScript/Vite build passed.
+- HTTP tests exercise URL/header validation, private/mixed DNS rejection, pinned IP connections, TLS hostname selection, nested response mapping, body/response/record bounds, JSON parsing, token lookup, sanitized errors, timeout handling, GET retry classification, permanent POST failures and saved Activity output reuse.
+- Real PostgreSQL + Temporal execution completed all four templates. Report downloads matched recorded sizes and run events remained contiguous.
+- `scripts/http_smoke.py` performed real GET (HTTP 200, 10 records) and POST (HTTP 201, 1 record) requests to JSONPlaceholder, then verified all three downloadable report formats for each. The provider's POST endpoint is a demo and does not persist changes.
+- Browser acceptance selected the HTTP template, inspected the HTTP controls, ran it successfully, showed 10 records and all three report links, and checked POST body-source controls. No browser errors or warnings were reported.
+- Runtime HTTP requests use Python's standard-library HTTP client with validated/pinned DNS and TLS verification; they do not use proxy environment variables. Tests mock transport boundaries, while the opt-in acceptance script covers the real external API.
+- External POST effects cannot be rolled back by cancellation. A crash or Activity timeout before output persistence can repeat a request; target APIs must honor the stable idempotency key. This extension does not claim exactly-once remote delivery.
+
+## Original core acceptance — 17 October 2026
 
 ## Automated checks
 
@@ -7,7 +19,7 @@
 - TypeScript and Vite 8 production build passed.
 - `npm audit` reported zero known vulnerabilities at verification time.
 - `docker compose config --quiet` passed. The Docker daemon was unavailable, so container execution was not verified.
-- One third-party deprecation warning remains in the backend test adapter: Starlette recommends httpx2 for its test client. It did not fail the tests; runtime HTTP uses httpx.
+- One third-party deprecation warning remains in the backend test adapter: Starlette recommends httpx2 for its test client. It did not fail the tests.
 
 ## Real PostgreSQL + Temporal
 
@@ -23,6 +35,6 @@ The browser confirmed template selection, adding a delay block and undoing it, r
 
 ## Scope
 
-The core local-workspace delivery is complete, with seven real node types. HTTP/file/AI connections, webhooks/schedules and multi-user permissions from the future-extension section of the original plan are not implemented and are not advertised as working.
+The core local-workspace delivery now has eight real node types, including GET/POST HTTP requests. File/AI connections, webhooks/schedules and multi-user permissions remain future extensions.
 
 The final browser acceptance also imported a delay workflow from JSON, refreshed while it was running, reattached to the same run ID in read-only mode and cancelled it from the UI. The mini map displayed all three nodes and all three report links were visible.
